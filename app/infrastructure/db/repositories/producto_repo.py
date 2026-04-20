@@ -103,6 +103,8 @@ class ProductoRepository(AbstractProductoRepository):
         m.imagen_thumb = producto.imagen_thumb
         m.activo = producto.activo
         await self._session.flush()
+        # Recargar con specs usando eager load para evitar lazy load async
+        m = await self._get_by_pk(producto.id)
         return _to_entity(m)
 
     async def delete(self, producto_id: int) -> None:
@@ -119,6 +121,7 @@ class ProductoRepository(AbstractProductoRepository):
             raise ValueError(f"Stock insuficiente (disponible: {m.stock})")
         m.stock -= cantidad
         await self._session.flush()
+        m = await self._get_by_pk(producto_id)
         return _to_entity(m)
 
     async def increment_vistas(self, producto_id: int) -> None:
