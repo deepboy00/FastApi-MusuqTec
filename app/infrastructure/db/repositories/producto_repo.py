@@ -2,6 +2,7 @@ from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.domain.producto.entity import Producto
 from app.domain.producto.repository import AbstractProductoRepository
@@ -36,20 +37,29 @@ class ProductoRepository(AbstractProductoRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
+    def _base_stmt(self):
+        return select(ProductoModel).options(selectinload(ProductoModel.specs))
+
+    async def _get_by_pk(self, producto_id: int) -> Optional[ProductoModel]:
+        result = await self._session.execute(
+            self._base_stmt().where(ProductoModel.id == producto_id)
+        )
+        return result.scalar_one_or_none()
+
     async def get_all(self, activo_only: bool = True) -> list[Producto]:
-        stmt = select(ProductoModel).order_by(ProductoModel.nombre)
+        stmt = self._base_stmt().order_by(ProductoModel.nombre)
         if activo_only:
             stmt = stmt.where(ProductoModel.activo.is_(True))
         result = await self._session.execute(stmt)
         return [_to_entity(r) for r in result.scalars().all()]
 
     async def get_by_id(self, producto_id: int) -> Optional[Producto]:
-        m = await self._session.get(ProductoModel, producto_id)
+        m = await self._get_by_pk(producto_id)
         return _to_entity(m) if m else None
 
     async def get_by_categoria(self, categoria_id: int) -> list[Producto]:
         result = await self._session.execute(
-            select(ProductoModel)
+            self._base_stmt()
             .where(ProductoModel.categoria_id == categoria_id, ProductoModel.activo.is_(True))
             .order_by(ProductoModel.nombre)
         )
@@ -73,11 +83,12 @@ class ProductoRepository(AbstractProductoRepository):
         )
         self._session.add(m)
         await self._session.flush()
-        await self._session.refresh(m)
+        # Recargar con specs usando eager load
+        m = await self._get_by_pk(m.id)
         return _to_entity(m)
 
     async def update(self, producto: Producto) -> Producto:
-        m = await self._session.get(ProductoModel, producto.id)
+        m = await self._get_by_pk(producto.id)
         if not m:
             raise ValueError(f"Producto {producto.id} no existe")
         m.nombre = producto.nombre
@@ -95,13 +106,13 @@ class ProductoRepository(AbstractProductoRepository):
         return _to_entity(m)
 
     async def delete(self, producto_id: int) -> None:
-        m = await self._session.get(ProductoModel, producto_id)
+        m = await self._get_by_pk(producto_id)
         if m:
             await self._session.delete(m)
             await self._session.flush()
 
     async def decrement_stock(self, producto_id: int, cantidad: int = 1) -> Producto:
-        m = await self._session.get(ProductoModel, producto_id)
+        m = await self._get_by_pk(producto_id)
         if not m:
             raise ValueError(f"Producto {producto_id} no existe")
         if m.stock < cantidad:
@@ -111,13 +122,13 @@ class ProductoRepository(AbstractProductoRepository):
         return _to_entity(m)
 
     async def increment_vistas(self, producto_id: int) -> None:
-        m = await self._session.get(ProductoModel, producto_id)
+        m = await self._get_by_pk(producto_id)
         if m:
             m.vistas = (m.vistas or 0) + 1
             await self._session.flush()
 
     async def increment_wsp_clicks(self, producto_id: int) -> None:
-        m = await self._session.get(ProductoModel, producto_id)
+        m = await self._get_by_pk(producto_id)
         if m:
             m.wsp_clicks = (m.wsp_clicks or 0) + 1
             await self._session.flush()
