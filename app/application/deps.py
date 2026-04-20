@@ -30,7 +30,7 @@ async def get_current_admin(
 
     repo = AdminRepository(db)
     admin = await repo.get_by_id(int(admin_id))
-    if admin is None or not admin.activo:
+    if admin is None:
         raise credentials_exception
 
-    return {"id": admin.id, "email": admin.email}
+    return {"id": admin.id, "username": admin.username}

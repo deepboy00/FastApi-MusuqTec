@@ -1,11 +1,11 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional
 
 
 @dataclass
 class Admin:
-    email: str
-    hashed_password: str
+    username: str
+    password_hash: str
     id: Optional[int] = None
-    nombre: str = ""
-    activo: bool = True
+    created_at: Optional[datetime] = None

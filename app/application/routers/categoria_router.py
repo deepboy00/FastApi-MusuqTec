@@ -40,7 +40,7 @@ async def crear_categoria(
     existing = await repo.get_by_slug(body.slug)
     if existing:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="El slug ya existe")
-    cat = await repo.create(Categoria(nombre=body.nombre, slug=body.slug, activo=body.activo))
+    cat = await repo.create(Categoria(nombre=body.nombre, slug=body.slug, icono=body.icono, activo=body.activo))
     return CategoriaOut(**cat.__dict__)
 
 
@@ -59,6 +59,8 @@ async def actualizar_categoria(
         cat.nombre = body.nombre
     if body.slug is not None:
         cat.slug = body.slug
+    if body.icono is not None:
+        cat.icono = body.icono
     if body.activo is not None:
         cat.activo = body.activo
     updated = await repo.update(cat)

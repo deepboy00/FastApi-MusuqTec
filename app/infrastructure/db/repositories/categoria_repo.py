@@ -9,7 +9,14 @@ from app.infrastructure.db.models.categoria_model import CategoriaModel
 
 
 def _to_entity(m: CategoriaModel) -> Categoria:
-    return Categoria(id=m.id, nombre=m.nombre, slug=m.slug, activo=m.activo)
+    return Categoria(
+        id=m.id,
+        nombre=m.nombre,
+        icono=m.icono,
+        slug=m.slug,
+        activo=m.activo,
+        created_at=m.created_at,
+    )
 
 
 class CategoriaRepository(AbstractCategoriaRepository):
@@ -33,7 +40,7 @@ class CategoriaRepository(AbstractCategoriaRepository):
         return _to_entity(m) if m else None
 
     async def create(self, categoria: Categoria) -> Categoria:
-        m = CategoriaModel(nombre=categoria.nombre, slug=categoria.slug, activo=categoria.activo)
+        m = CategoriaModel(nombre=categoria.nombre, icono=categoria.icono, slug=categoria.slug, activo=categoria.activo)
         self._session.add(m)
         await self._session.flush()
         await self._session.refresh(m)
@@ -44,6 +51,7 @@ class CategoriaRepository(AbstractCategoriaRepository):
         if not m:
             raise ValueError(f"Categoria {categoria.id} no existe")
         m.nombre = categoria.nombre
+        m.icono = categoria.icono
         m.slug = categoria.slug
         m.activo = categoria.activo
         await self._session.flush()

@@ -1,29 +1,28 @@
+from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel
 
 
 class BannerCreate(BaseModel):
     titulo: str
-    subtitulo: str = ""
+    subtitulo: Optional[str] = None
     orden: int = 0
     activo: bool = True
-    link: str | None = None
 
 
 class BannerUpdate(BaseModel):
-    titulo: str | None = None
-    subtitulo: str | None = None
-    orden: int | None = None
-    activo: bool | None = None
-    link: str | None = None
+    titulo: Optional[str] = None
+    subtitulo: Optional[str] = None
+    orden: Optional[int] = None
+    activo: Optional[bool] = None
 
 
 class BannerOut(BaseModel):
     id: int
     titulo: str
-    subtitulo: str
-    imagen_url: str
-    orden: int
+    subtitulo: Optional[str] = None
     activo: bool
-    link: str | None
+    orden: int
+    created_at: datetime
 
     model_config = {"from_attributes": True}

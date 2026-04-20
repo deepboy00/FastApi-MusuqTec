@@ -9,17 +9,23 @@ from app.infrastructure.db.models.producto_model import ProductoModel
 
 
 def _to_entity(m: ProductoModel) -> Producto:
+    from app.domain.producto.entity import ProductoSpec
     return Producto(
         id=m.id,
         nombre=m.nombre,
+        slug=m.slug,
+        tagline=m.tagline,
         descripcion=m.descripcion,
-        precio=m.precio,
+        precio=float(m.precio),
         stock=m.stock,
-        activo=m.activo,
-        destacado=m.destacado,
+        sku=m.sku,
+        categoria_id=m.categoria_id,
         imagen_url=m.imagen_url,
         imagen_thumb=m.imagen_thumb,
-        categoria_id=m.categoria_id,
+        activo=m.activo,
+        vistas=m.vistas,
+        wsp_clicks=m.wsp_clicks,
+        specs=[ProductoSpec(id=s.id, spec=s.spec, orden=s.orden) for s in (m.specs or [])],
         created_at=m.created_at,
         updated_at=m.updated_at,
     )
@@ -52,14 +58,18 @@ class ProductoRepository(AbstractProductoRepository):
     async def create(self, producto: Producto) -> Producto:
         m = ProductoModel(
             nombre=producto.nombre,
+            slug=producto.slug,
+            tagline=producto.tagline,
             descripcion=producto.descripcion,
             precio=producto.precio,
             stock=producto.stock,
-            activo=producto.activo,
-            destacado=producto.destacado,
+            sku=producto.sku,
+            categoria_id=producto.categoria_id,
             imagen_url=producto.imagen_url,
             imagen_thumb=producto.imagen_thumb,
-            categoria_id=producto.categoria_id,
+            activo=producto.activo,
+            vistas=0,
+            wsp_clicks=0,
         )
         self._session.add(m)
         await self._session.flush()
@@ -71,14 +81,16 @@ class ProductoRepository(AbstractProductoRepository):
         if not m:
             raise ValueError(f"Producto {producto.id} no existe")
         m.nombre = producto.nombre
+        m.slug = producto.slug
+        m.tagline = producto.tagline
         m.descripcion = producto.descripcion
         m.precio = producto.precio
         m.stock = producto.stock
-        m.activo = producto.activo
-        m.destacado = producto.destacado
+        m.sku = producto.sku
+        m.categoria_id = producto.categoria_id
         m.imagen_url = producto.imagen_url
         m.imagen_thumb = producto.imagen_thumb
-        m.categoria_id = producto.categoria_id
+        m.activo = producto.activo
         await self._session.flush()
         return _to_entity(m)
 

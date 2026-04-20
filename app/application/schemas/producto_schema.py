@@ -1,15 +1,32 @@
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel, field_validator
+
+
+class ProductoSpecOut(BaseModel):
+    id: int
+    spec: str
+    orden: int
+
+    model_config = {"from_attributes": True}
+
+
+class ProductoSpecIn(BaseModel):
+    spec: str
+    orden: int = 0
 
 
 class ProductoCreate(BaseModel):
     nombre: str
-    descripcion: str = ""
+    slug: str
+    sku: str
     precio: float
     stock: int
-    categoria_id: int
+    categoria_id: Optional[int] = None
+    tagline: Optional[str] = None
+    descripcion: Optional[str] = None
     activo: bool = True
-    destacado: bool = False
+    specs: list[ProductoSpecIn] = []
 
     @field_validator("precio")
     @classmethod
@@ -27,26 +44,34 @@ class ProductoCreate(BaseModel):
 
 
 class ProductoUpdate(BaseModel):
-    nombre: str | None = None
-    descripcion: str | None = None
-    precio: float | None = None
-    stock: int | None = None
-    categoria_id: int | None = None
-    activo: bool | None = None
-    destacado: bool | None = None
+    nombre: Optional[str] = None
+    slug: Optional[str] = None
+    sku: Optional[str] = None
+    tagline: Optional[str] = None
+    descripcion: Optional[str] = None
+    precio: Optional[float] = None
+    stock: Optional[int] = None
+    categoria_id: Optional[int] = None
+    activo: Optional[bool] = None
+    specs: Optional[list[ProductoSpecIn]] = None
 
 
 class ProductoOut(BaseModel):
     id: int
     nombre: str
-    descripcion: str
+    slug: str
+    sku: str
+    tagline: Optional[str] = None
+    descripcion: Optional[str] = None
     precio: float
     stock: int
+    categoria_id: Optional[int] = None
+    imagen_url: Optional[str] = None
+    imagen_thumb: Optional[str] = None
     activo: bool
-    destacado: bool
-    imagen_url: str
-    imagen_thumb: str
-    categoria_id: int
+    vistas: int
+    wsp_clicks: int
+    specs: list[ProductoSpecOut] = []
     created_at: datetime
     updated_at: datetime
 

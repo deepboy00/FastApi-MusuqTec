@@ -1,13 +1,13 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional
 
 
 @dataclass
 class Banner:
     titulo: str
-    subtitulo: str
-    imagen_url: str
-    orden: int = 0
     id: Optional[int] = None
+    subtitulo: Optional[str] = None
     activo: bool = True
-    link: Optional[str] = None
+    orden: int = 0
+    created_at: Optional[datetime] = None

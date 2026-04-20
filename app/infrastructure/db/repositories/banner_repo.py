@@ -13,10 +13,9 @@ def _to_entity(m: BannerModel) -> Banner:
         id=m.id,
         titulo=m.titulo,
         subtitulo=m.subtitulo,
-        imagen_url=m.imagen_url,
         orden=m.orden,
         activo=m.activo,
-        link=m.link,
+        created_at=m.created_at,
     )
 
 
@@ -40,10 +39,8 @@ class BannerRepository(AbstractBannerRepository):
         m = BannerModel(
             titulo=banner.titulo,
             subtitulo=banner.subtitulo,
-            imagen_url=banner.imagen_url,
             orden=banner.orden,
             activo=banner.activo,
-            link=banner.link,
         )
         self._session.add(m)
         await self._session.flush()
@@ -56,10 +53,8 @@ class BannerRepository(AbstractBannerRepository):
             raise ValueError(f"Banner {banner.id} no existe")
         m.titulo = banner.titulo
         m.subtitulo = banner.subtitulo
-        m.imagen_url = banner.imagen_url
         m.orden = banner.orden
         m.activo = banner.activo
-        m.link = banner.link
         await self._session.flush()
         return _to_entity(m)
 

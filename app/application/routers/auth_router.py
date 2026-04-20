@@ -18,19 +18,13 @@ async def login(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TokenOut:
     repo = AdminRepository(db)
-    admin = await repo.get_by_email(form.username)
+    admin = await repo.get_by_username(form.username)
 
-    if not admin or not verify_password(form.password, admin.hashed_password):
+    if not admin or not verify_password(form.password, admin.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales incorrectas",
             headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    if not admin.activo:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cuenta desactivada",
         )
 
     token = create_access_token({"sub": str(admin.id)})
