@@ -167,6 +167,26 @@ async def actualizar_imagen(
     return _producto_out(updated)
 
 
+@router.post("/{producto_id}/vista", status_code=status.HTTP_204_NO_CONTENT)
+async def registrar_vista(
+    producto_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
+    """Incrementa el contador de vistas (llamado desde el frontend público)."""
+    repo = ProductoRepository(db)
+    await repo.increment_vistas(producto_id)
+
+
+@router.post("/{producto_id}/wsp_click", status_code=status.HTTP_204_NO_CONTENT)
+async def registrar_wsp_click(
+    producto_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
+    """Incrementa el contador de clicks de WhatsApp (llamado desde el frontend público)."""
+    repo = ProductoRepository(db)
+    await repo.increment_wsp_clicks(producto_id)
+
+
 @router.patch("/{producto_id}/stock", response_model=ProductoOut)
 async def decrementar_stock(
     producto_id: int,

@@ -109,3 +109,15 @@ class ProductoRepository(AbstractProductoRepository):
         m.stock -= cantidad
         await self._session.flush()
         return _to_entity(m)
+
+    async def increment_vistas(self, producto_id: int) -> None:
+        m = await self._session.get(ProductoModel, producto_id)
+        if m:
+            m.vistas = (m.vistas or 0) + 1
+            await self._session.flush()
+
+    async def increment_wsp_clicks(self, producto_id: int) -> None:
+        m = await self._session.get(ProductoModel, producto_id)
+        if m:
+            m.wsp_clicks = (m.wsp_clicks or 0) + 1
+            await self._session.flush()
