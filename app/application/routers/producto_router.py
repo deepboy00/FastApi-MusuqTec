@@ -61,12 +61,13 @@ def _producto_out(p: Producto) -> ProductoOut:
 async def listar_productos(
     db: Annotated[AsyncSession, Depends(get_db)],
     categoria_id: int | None = None,
+    todos: bool = False,  # ?todos=true retorna también inactivos (solo admin lo usa)
 ) -> list[ProductoOut]:
     repo = ProductoRepository(db)
     if categoria_id:
         productos = await repo.get_by_categoria(categoria_id)
     else:
-        productos = await repo.get_all(activo_only=True)
+        productos = await repo.get_all(activo_only=not todos)
     return [_producto_out(p) for p in productos]
 
 
@@ -118,6 +119,43 @@ async def crear_producto(
             imagen_thumb=imagen_thumb,
         )
     )
+    return _producto_out(p)
+
+
+@router.post("/sin-imagen", response_model=ProductoOut, status_code=status.HTTP_201_CREATED)
+async def crear_producto_sin_imagen(
+    body: ProductoCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[dict, Depends(get_current_admin)],
+) -> ProductoOut:
+    """Crea un producto sin imagen (útil para importación masiva desde Excel).
+    La imagen puede agregarse después con PATCH /{producto_id}/imagen.
+    """
+    repo = ProductoRepository(db)
+    spec_repo = ProductoSpecRepository(db)
+
+    p = await repo.create(
+        Producto(
+            nombre=body.nombre,
+            slug=body.slug,
+            sku=body.sku,
+            tagline=body.tagline,
+            descripcion=body.descripcion,
+            precio=body.precio,
+            stock=body.stock,
+            categoria_id=body.categoria_id,
+            activo=body.activo if body.activo is not None else True,
+            imagen_url=None,
+            imagen_thumb=None,
+        )
+    )
+
+    if body.specs:
+        nuevas = await spec_repo.replace_all(
+            p.id, [ProductoSpec(spec=s.spec, orden=s.orden) for s in body.specs]
+        )
+        p.specs = nuevas
+
     return _producto_out(p)
 
 
