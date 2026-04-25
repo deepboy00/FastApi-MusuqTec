@@ -8,7 +8,7 @@ from app.application.deps import get_current_admin
 from app.application.schemas.producto_schema import ProductoCreate, ProductoOut, ProductoUpdate
 from app.core.database import get_db
 from app.domain.producto.entity import Producto, ProductoSpec
-from app.infrastructure.cloudinary.uploader import upload_product_image
+from app.infrastructure.cloudinary.uploader import delete_image, extract_public_id, upload_product_image
 from app.infrastructure.db.repositories.producto_repo import ProductoRepository
 from app.infrastructure.db.repositories.producto_spec_repo import ProductoSpecRepository
 
@@ -196,12 +196,24 @@ async def actualizar_imagen(
     p = await repo.get_by_id(producto_id)
     if not p:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Producto no encontrado")
+
+    # Guardar public_id de la imagen anterior para borrarla después
+    old_public_id = extract_public_id(p.imagen_url) if p.imagen_url else None
+
     file_bytes = await _validate_image(imagen)
     public_id = f"prod_{uuid.uuid4().hex}"
     imagen_url, imagen_thumb = upload_product_image(file_bytes, public_id)
     p.imagen_url = imagen_url
     p.imagen_thumb = imagen_thumb
     updated = await repo.update(p)
+
+    # Borrar imagen anterior de Cloudinary (después de confirmar que la nueva subió bien)
+    if old_public_id:
+        try:
+            delete_image(old_public_id)
+        except Exception:
+            pass  # No fallar si Cloudinary da error al borrar
+
     return _producto_out(updated)
 
 
@@ -250,4 +262,15 @@ async def eliminar_producto(
     p = await repo.get_by_id(producto_id)
     if not p:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Producto no encontrado")
+
+    # Guardar public_id antes de borrar el producto
+    old_public_id = extract_public_id(p.imagen_url) if p.imagen_url else None
+
     await repo.delete(producto_id)
+
+    # Borrar imagen de Cloudinary
+    if old_public_id:
+        try:
+            delete_image(old_public_id)
+        except Exception:
+            pass
